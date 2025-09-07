@@ -1,22 +1,36 @@
-node_modules
+# ---- Node / JS ----
+node_modules/
+build/
+dist/
 
-# Ignore virtual environments
+# ---- Python Environments ----
 venv/
 .env/
 
-# Ignore model files
-/models/*.h5
-
-# Ignore dataset files
+# ---- Data & Models ----
+models/*.h5
 data/images/
 
-# Ignore Python cache files
+# ---- Python Caches ----
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Ignore Jupyter Notebook checkpoints
+# ---- Jupyter ----
 .ipynb_checkpoints/
 
-# Ignore system files
+# ---- Logs ----
+*.log
+
+# ---- IDE / Editor ----
+.vscode/
+.idea/
+
+# ---- OS junk ----
 .DS_Store
 Thumbs.db
+
+# ---- Misc ----
+*.swp
+*.tmp

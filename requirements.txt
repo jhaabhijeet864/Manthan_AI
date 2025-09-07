@@ -3,3 +3,6 @@ pandas
 scikit-learn
 matplotlib
 pyarrow
+
+# flask (optional, uncomment if needed)
+# flask
