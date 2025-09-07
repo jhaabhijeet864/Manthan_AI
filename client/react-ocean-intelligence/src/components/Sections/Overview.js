@@ -6,6 +6,7 @@ import {
   DataStreamLine, 
   PulseDot 
 } from '../AnimatedElements/AnimatedElements';
+import BackendPrediction from '../../BackendPrediction';
 
 const Overview = ({ isActive }) => {
   const chartRef = useRef(null);
@@ -219,6 +220,16 @@ const Overview = ({ isActive }) => {
                 <div className="hotspot-value">634 species</div>
                 <div className="hotspot-bar" style={{width: '65%'}}></div>
               </div>
+            </div>
+          </div>
+          
+          <div className="chart-panel">
+            <FloatingDataIcon icon="fas fa-fish" delay={2} />
+            <div className="panel-header">
+              <h3><i className="fas fa-microscope"></i> AI Prediction</h3>
+            </div>
+            <div className="ml-prediction-container">
+              <BackendPrediction />
             </div>
           </div>
         </div>
