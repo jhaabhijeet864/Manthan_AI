@@ -1,24 +1,36 @@
-# Node
+# ---- Node / JS ----
 node_modules/
 build/
 dist/
-.env
 
-# Python
+# ---- Python Environments ----
+venv/
+.env/
+
+# ---- Data & Models ----
+models/*.h5
+data/images/
+
+# ---- Python Caches ----
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-venv/
-.env
 
-# OS
+# ---- Jupyter ----
+.ipynb_checkpoints/
+
+# ---- Logs ----
+*.log
+
+# ---- IDE / Editor ----
+.vscode/
+.idea/
+
+# ---- OS junk ----
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-
-# IDE
-.vscode/
-.idea/
+# ---- Misc ----
+*.swp
+*.tmp
