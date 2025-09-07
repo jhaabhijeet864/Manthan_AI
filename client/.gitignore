@@ -1,0 +1,30 @@
+# Node modules
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.*
+
+# VS Code settings
+.vscode/
+
+# Coverage reports
+coverage/
+
+# Misc
+*.local
+*.sublime-workspace
+*.sublime-project
