@@ -1,1 +1,22 @@
 node_modules
+
+# Ignore virtual environments
+venv/
+.env/
+
+# Ignore model files
+/models/*.h5
+
+# Ignore dataset files
+data/images/
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
