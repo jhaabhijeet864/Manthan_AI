@@ -1,0 +1,146 @@
+{
+  "accuracy": 0.7075098814229249,
+  "macro_f1": 0.15446386906941278,
+  "class_metrics": {
+    "Aristaeopsis edwardsiana": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 2.0
+    },
+    "Astronesthes indopacificus": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 2.0
+    },
+    "Bathynomus keablei": {
+      "precision": 0.16666666666666666,
+      "recall": 0.6666666666666666,
+      "f1-score": 0.26666666666666666,
+      "support": 3.0
+    },
+    "Charybdis (Archias) smithii": {
+      "precision": 0.2222222222222222,
+      "recall": 0.4,
+      "f1-score": 0.2857142857142857,
+      "support": 5.0
+    },
+    "Chaunax multilepis": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 2.0
+    },
+    "Euthalenessa": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 3.0
+    },
+    "Heterocarpus chani": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 8.0
+    },
+    "Homolax megalops": {
+      "precision": 0.09090909090909091,
+      "recall": 0.09090909090909091,
+      "f1-score": 0.09090909090909091,
+      "support": 11.0
+    },
+    "Metanephrops andamanicus": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 3.0
+    },
+    "Munida andamanica": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 5.0
+    },
+    "Neoepinnula orientalis": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 3.0
+    },
+    "Nephropsis stewarti": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 4.0
+    },
+    "OTHER": {
+      "precision": 0.9326145552560647,
+      "recall": 0.7990762124711316,
+      "f1-score": 0.8606965174129353,
+      "support": 433.0
+    },
+    "Paralomis indica": {
+      "precision": 0.125,
+      "recall": 0.3333333333333333,
+      "f1-score": 0.18181818181818182,
+      "support": 3.0
+    },
+    "Parilia alcocki": {
+      "precision": 0.3333333333333333,
+      "recall": 0.5,
+      "f1-score": 0.4,
+      "support": 2.0
+    },
+    "Paromolopsis boasi": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 2.0
+    },
+    "Pisione": {
+      "precision": 0.3333333333333333,
+      "recall": 0.5,
+      "f1-score": 0.4,
+      "support": 2.0
+    },
+    "Pleistacantha pungens": {
+      "precision": 0.16666666666666666,
+      "recall": 0.5,
+      "f1-score": 0.25,
+      "support": 2.0
+    },
+    "Prionospio atrovitta": {
+      "precision": 0.16666666666666666,
+      "recall": 0.3333333333333333,
+      "f1-score": 0.2222222222222222,
+      "support": 3.0
+    },
+    "Puerulus sewelli": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1-score": 0.0,
+      "support": 5.0
+    },
+    "Squilloides leptosquilla": {
+      "precision": 0.18181818181818182,
+      "recall": 0.6666666666666666,
+      "f1-score": 0.2857142857142857,
+      "support": 3.0
+    },
+    "accuracy": 0.7075098814229249,
+    "macro avg": {
+      "precision": 0.12948717699391551,
+      "recall": 0.2280945382562011,
+      "f1-score": 0.15446386906941278,
+      "support": 506.0
+    },
+    "weighted avg": {
+      "precision": 0.8093287248006095,
+      "recall": 0.7075098814229249,
+      "f1-score": 0.7511451137107442,
+      "support": 506.0
+    }
+  },
+  "timestamp": "2025-09-08 19:38:56"
+}
