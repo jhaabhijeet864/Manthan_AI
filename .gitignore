@@ -22,3 +22,11 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Ignore raw and processed data, models, and videos
+data/
+models/data/
+models/trained_models/*.h5
+models/trained_models/*.keras
+*.mp4
+*.pkl
