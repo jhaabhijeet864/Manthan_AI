@@ -64,7 +64,6 @@ history = model.fit(
 # Save model in both HDF5 and Keras formats
 model.save("models/trained_models/fish_cnn.h5")
 model.save("models/trained_models/fish_cnn.keras")
-print("✅ Model saved to models/trained_models/fish_cnn.h5 and models/trained_models/fish_cnn.keras")
 
 # Optional: Plot training history
 import matplotlib.pyplot as plt
@@ -76,6 +75,3 @@ plt.legend()
 plt.title('Training History')
 plt.savefig("models/trained_models/cnn_training_history.png")
 plt.show()
-
-# Command to run the training script
-os.system("python models/train_cnn.py")
