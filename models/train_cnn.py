@@ -1,82 +1,54 @@
 import argparse
 import json
-import math
 import os
 import random
+import time
+from pathlib import Path
+from typing import Tuple
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from torchvision import datasets, models, transforms
+
 def set_seed(seed: int = 42) -> None:
-    import random
-    import numpy as np
-    import tensorflow as tf
     random.seed(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    import numpy as np
     np.random.seed(seed)
-    tf.random.set_seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
+def build_dataloaders(data_dir: str, img_size: int, batch_size: int, num_workers: int) -> Tuple[DataLoader, DataLoader, dict]:
+    """Builds train and validation dataloaders."""
+    mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+    train_transform = transforms.Compose([
+        transforms.RandomResizedCrop(img_size, scale=(0.8, 1.0)),
+        transforms.RandomHorizontalFlip(),
+        transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),
+        transforms.ToTensor(),
+        transforms.Normalize(mean, std),
+    ])
+    val_transform = transforms.Compose([
+        transforms.Resize(img_size),
+        transforms.CenterCrop(img_size),
+        transforms.ToTensor(),
+        transforms.Normalize(mean, std),
+    ])
 
+    train_dataset = datasets.ImageFolder(os.path.join(data_dir, "train"), transform=train_transform)
+    val_dataset = datasets.ImageFolder(os.path.join(data_dir, "val"), transform=val_transform)
 
-def main():
-    import os
-    import argparse
-    import tensorflow as tf
-    from tensorflow.keras.preprocessing.image import ImageDataGenerator
-    from tensorflow.keras.applications import ResNet50
-    from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
-    from tensorflow.keras.models import Model
-
-    parser = argparse.ArgumentParser(description="Train a CNN classifier on an ImageFolder dataset.")
-    parser.add_argument("--data_dir", type=str, default="data", help="Path with train/ and val/ subfolders")
-    parser.add_argument("--output_model", type=str, default="models/trained_models/fish_cnn.h5", help="Where to save the trained model")
-    parser.add_argument("--img_size", type=int, default=224, help="Input image size")
-    parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs")
-    parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
-    parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    args = parser.parse_args()
-
-    set_seed(args.seed)
-
-    train_dir = os.path.join(args.data_dir, "train")
-    val_dir = os.path.join(args.data_dir, "val")
-
-    # Data generators
-    train_datagen = ImageDataGenerator(
-        rescale=1./255,
-        rotation_range=20,
-        width_shift_range=0.1,
-        height_shift_range=0.1,
-        horizontal_flip=True
+    train_loader = DataLoader(
+        train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True
     )
-    val_datagen = ImageDataGenerator(rescale=1./255)
-
-    train_gen = train_datagen.flow_from_directory(
-        train_dir, target_size=(args.img_size, args.img_size), batch_size=args.batch_size, class_mode='categorical'
+    val_loader = DataLoader(
+        val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True
     )
-    val_gen = val_datagen.flow_from_directory(
-        val_dir, target_size=(args.img_size, args.img_size), batch_size=args.batch_size, class_mode='categorical'
-    )
-
-    # Model
-    base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(args.img_size, args.img_size, 3))
-    x = GlobalAveragePooling2D()(base_model.output)
-    x = Dense(128, activation='relu')(x)
-    output = Dense(train_gen.num_classes, activation='softmax')(x)
-    model = Model(inputs=base_model.input, outputs=output)
-
-    # Optionally freeze base model
-    for layer in base_model.layers:
-        layer.trainable = False
-
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-
-    model.fit(
-        train_gen,
-        validation_data=val_gen,
-        epochs=args.epochs
-    )
-
-    os.makedirs(os.path.dirname(args.output_model), exist_ok=True)
-    model.save(args.output_model)
-
-    print(f"Model saved to {args.output_model}")
-
+    return train_loader, val_loader, train_dataset.class_to_idx
 
 
 def build_model(num_classes: int, arch: str = "resnet18", pretrained: bool = False, freeze_backbone: bool = False) -> nn.Module:
@@ -100,7 +72,7 @@ def build_model(num_classes: int, arch: str = "resnet18", pretrained: bool = Fal
                 if not name.startswith("fc."):
                     p.requires_grad = False
     elif arch == "mobilenet_v3_small":
-        weights = models.MobileNet_V3_Small_Weights.IMAGENET1K_V1 if pretrained else None
+        weights = models.MobileNet_V3_Small_Weights.IMAGENET1K_V1 if pretrained.
         model = models.mobilenet_v3_small(weights=weights)
         in_feats = model.classifier[-1].in_features
         model.classifier[-1] = nn.Linear(in_feats, num_classes)
@@ -130,12 +102,6 @@ def evaluate(model: nn.Module, loader: DataLoader, device: torch.device, criteri
     avg_loss = loss_sum / max(total, 1)
     acc = correct * 100.0 / max(total, 1)
     return avg_loss, acc
-
-
-def save_checkpoint(state: dict, is_best: bool, output_dir: Path) -> None:
-    (output_dir / "last.pt").write_bytes(torch.save(state, output_dir / "last.pt") or b"")
-    if is_best:
-        (output_dir / "best.pt").write_bytes(torch.save(state, output_dir / "best.pt") or b"")
 
 
 def train(
@@ -172,14 +138,12 @@ def train(
     criterion = nn.CrossEntropyLoss(label_smoothing=label_smoothing)
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = optim.AdamW(params, lr=lr, weight_decay=weight_decay)
-    # OneCycleLR provides good defaults; steps_per_epoch needs len(train_loader)
     scheduler = optim.lr_scheduler.OneCycleLR(
         optimizer, max_lr=lr, epochs=epochs, steps_per_epoch=len(train_loader), pct_start=0.15
     )
 
     scaler = torch.cuda.amp.GradScaler(enabled=amp)
 
-    # Save mapping for inference
     with open(out_dir / "class_to_idx.json", "w", encoding="utf-8") as f:
         json.dump(class_to_idx, f, indent=2)
 
@@ -200,7 +164,7 @@ def train(
             with torch.cuda.amp.autocast(enabled=amp):
                 outputs = model(images)
                 loss = criterion(outputs, targets)
-            scaler.scale(loss).reweight(None).backward() if hasattr(scaler, "reweight") else scaler.scale(loss).backward()
+            scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
             scheduler.step()
@@ -229,15 +193,9 @@ def train(
             "class_to_idx": class_to_idx,
             "img_size": img_size,
         }
-        # Torch doesn't return bytes; ensure atomic write by temp then rename
-        tmp_last = out_dir / "last.pt.tmp"
-        torch.save(state, tmp_last)
-        tmp_last.replace(out_dir / "last.pt")
-
+        torch.save(state, out_dir / "last.pt")
         if is_best:
-            tmp_best = out_dir / "best.pt.tmp"
-            torch.save(state, tmp_best)
-            tmp_best.replace(out_dir / "best.pt")
+            torch.save(state, out_dir / "best.pt")
 
         print(
             f"Epoch {epoch:03d}/{epochs} | "
@@ -254,7 +212,7 @@ def train(
 def parse_args():
     p = argparse.ArgumentParser(description="Train a CNN classifier on an ImageFolder dataset.")
     p.add_argument("--data_dir", type=str, default="data", help="Path with train/ and val/ subfolders")
-    p.add_argument("--output_dir", type=str, default="runs/train_cnn", help="Where to save checkpoints")
+    p.add_gument("--output_dir", type=str, default="runs/train_cnn", help="Where to save checkpoints")
     p.add_argument("--arch", type=str, default="resnet18", choices=["resnet18", "resnet34", "mobilenet_v3_small"], help="Backbone architecture")
     p.add_argument("--img_size", type=int, default=224, help="Input image size")
     p.add_argument("--epochs", type=int, default=20, help="Number of training epochs")
@@ -271,54 +229,20 @@ def parse_args():
 
 
 if __name__ == "__main__":
-    main()
-
-# Paths
-data_dir = "data"
-train_dir = os.path.join(data_dir, "train")
-val_dir = os.path.join(data_dir, "val")
-output_model = "models/trained_models/fish_cnn.h5"
-
-# Data generators
-img_size = 224
-batch_size = 32
-
-train_datagen = ImageDataGenerator(
-    rescale=1./255,
-    rotation_range=20,
-    width_shift_range=0.1,
-    height_shift_range=0.1,
-    horizontal_flip=True
-)
-val_datagen = ImageDataGenerator(rescale=1./255)
-
-train_gen = train_datagen.flow_from_directory(
-    train_dir, target_size=(img_size, img_size), batch_size=batch_size, class_mode='categorical'
-)
-val_gen = val_datagen.flow_from_directory(
-    val_dir, target_size=(img_size, img_size), batch_size=batch_size, class_mode='categorical'
-)
-
-# Model
-base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(img_size, img_size, 3))
-x = GlobalAveragePooling2D()(base_model.output)
-x = Dense(128, activation='relu')(x)
-output = Dense(train_gen.num_classes, activation='softmax')(x)
-model = Model(inputs=base_model.input, outputs=output)
-
-# Optionally freeze base model
-for layer in base_model.layers:
-    layer.trainable = False
-
-model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-
-# Train
-model.fit(
-    train_gen,
-    validation_data=val_gen,
-    epochs=10
-)
-
-# Save
-os.makedirs(os.path.dirname(output_model), exist_ok=True)
-model.save(output_model)
+    args = parse_args()
+    train(
+        data_dir=args.data_dir,
+        output_dir=args.output_dir,
+        arch=args.arch,
+        img_size=args.img_size,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        lr=args.lr,
+        weight_decay=args.weight_decay,
+        num_workers=args.num_workers,
+        pretrained=args.pretrained,
+        freeze_backbone=args.freeze_backbone,
+        amp=args.amp,
+        seed=args.seed,
+        label_smoothing=args.label_smoothing,
+    )
