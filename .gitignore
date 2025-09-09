@@ -22,3 +22,8 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Data
+models/data/
+models/data/raw_data/
+models/data/raw_data/images/

@@ -1,24 +1,23 @@
-const { spawn } = require('child_process');
-const path = require('path');
+const axios = require('axios');
+const FormData = require('form-data');
 
-exports.runPredictiveModel = () => {
-  return new Promise((resolve, reject) => {
-    const scriptPath = path.join(__dirname, '../../../scripts/utils/predictive_model.py');
-    const py = spawn('python', [scriptPath]);
-    let data = '';
-    let error = '';
-    py.stdout.on('data', chunk => data += chunk);
-    py.stderr.on('data', chunk => error += chunk);
-    py.on('close', code => {
-      if (code !== 0 || error) {
-        reject(new Error(error || `Python exited with code ${code}`));
-      } else {
-        try {
-          resolve(JSON.parse(data));
-        } catch (e) {
-          reject(new Error('Invalid JSON from Python script'));
-        }
-      }
-    });
+const CNN_BASE = process.env.CNN_URL || 'http://localhost:5001';
+const RF_BASE  = process.env.RF_URL  || 'http://localhost:5002';
+
+async function predictTrend(payload) {
+  const res = await axios.post(`${RF_BASE}/predict_trend`, payload, { timeout: 15000 });
+  return res.data;
+}
+
+async function predictSpecies(fileBuffer, filename) {
+  const form = new FormData();
+  form.append('file', fileBuffer, { filename });
+  const res = await axios.post(`${CNN_BASE}/predict_species`, form, {
+    headers: form.getHeaders(),
+    maxBodyLength: Infinity,
+    timeout: 30000,
   });
-};
+  return res.data;
+}
+
+module.exports = { predictTrend, predictSpecies };

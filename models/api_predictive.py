@@ -1,9 +1,16 @@
 from flask import Flask, request, jsonify
 import joblib
 import numpy as np
+import os
+from flask_cors import CORS
 
 app = Flask(__name__)
-model = joblib.load('models/trained_models/species_rf.pkl')
+CORS(app, resources={r"/*": {"origins": "*"}})
+
+# Resolve model path relative to this file to avoid CWD issues
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, 'trained_models', 'species_rf.pkl')
+model = joblib.load(MODEL_PATH)
 
 @app.route('/predict_trend', methods=['POST'])
 def predict_trend():
@@ -16,5 +23,9 @@ def predict_trend():
     pred = model.predict(features)
     return jsonify({'prediction': pred[0]})
 
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({'status': 'ok'}), 200
+
 if __name__ == '__main__':
-    app.run(port=5002)
+    app.run(host='0.0.0.0', port=5002, threaded=True)

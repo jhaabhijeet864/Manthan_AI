@@ -3,85 +3,80 @@ import json
 import math
 import os
 import random
-import time
-from pathlib import Path
-from typing import Tuple, Dict
-import torch
-from torch.utils.data import DataLoader
-from torchvision import datasets, models, transforms
-import tensorflow as tf
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.applications import ResNet50
-from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
-from tensorflow.keras.models import Model
-
-#!/usr/bin/env python3
-# train_cnn.py
-# Generic PyTorch CNN training script using torchvision ImageFolder layout.
-# Expected data_dir structure:
-#   data_dir/
-#     train/
-#       class_a/ *.jpg
-#       class_b/ *.jpg
-#     val/
-#       class_a/ *.jpg
-#       class_b/ *.jpg
-
-
-import torch.nn as nn
-import torch.optim as optim
-
-
 def set_seed(seed: int = 42) -> None:
+    import random
+    import numpy as np
+    import tensorflow as tf
     random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    os.environ["PYTHONHASHSEED"] = str(seed)
+    np.random.seed(seed)
+    tf.random.set_seed(seed)
 
 
-def get_transforms(img_size: int) -> Tuple[transforms.Compose, transforms.Compose]:
-    imagenet_mean = [0.485, 0.456, 0.406]
-    imagenet_std = [0.229, 0.224, 0.225]
-    train_tf = transforms.Compose([
-        transforms.RandomResizedCrop(img_size, scale=(0.6, 1.0)),
-        transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(0.2, 0.2, 0.2, 0.05),
-        transforms.ToTensor(),
-        transforms.Normalize(imagenet_mean, imagenet_std),
-    ])
-    val_tf = transforms.Compose([
-        transforms.Resize(int(img_size * 1.15)),
-        transforms.CenterCrop(img_size),
-        transforms.ToTensor(),
-        transforms.Normalize(imagenet_mean, imagenet_std),
-    ])
-    return train_tf, val_tf
 
+def main():
+    import os
+    import argparse
+    import tensorflow as tf
+    from tensorflow.keras.preprocessing.image import ImageDataGenerator
+    from tensorflow.keras.applications import ResNet50
+    from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+    from tensorflow.keras.models import Model
 
-def build_dataloaders(data_dir: str, img_size: int, batch_size: int, num_workers: int) -> Tuple[DataLoader, DataLoader, Dict[str, int]]:
-    train_tf, val_tf = get_transforms(img_size)
-    train_dir = os.path.join(data_dir, "train")
-    val_dir = os.path.join(data_dir, "val")
+    parser = argparse.ArgumentParser(description="Train a CNN classifier on an ImageFolder dataset.")
+    parser.add_argument("--data_dir", type=str, default="data", help="Path with train/ and val/ subfolders")
+    parser.add_argument("--output_model", type=str, default="models/trained_models/fish_cnn.h5", help="Where to save the trained model")
+    parser.add_argument("--img_size", type=int, default=224, help="Input image size")
+    parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs")
+    parser.add_argument("--batch_size", type=int, default=32, help="Batch size")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    args = parser.parse_args()
 
-    if not os.path.isdir(train_dir):
-        raise FileNotFoundError(f"Missing directory: {train_dir}")
-    if not os.path.isdir(val_dir):
-        raise FileNotFoundError(f"Missing directory: {val_dir}")
+    set_seed(args.seed)
 
-    train_ds = datasets.ImageFolder(train_dir, transform=train_tf)
-    val_ds = datasets.ImageFolder(val_dir, transform=val_tf)
+    train_dir = os.path.join(args.data_dir, "train")
+    val_dir = os.path.join(args.data_dir, "val")
 
-    class_to_idx = train_ds.class_to_idx
-    if class_to_idx != val_ds.class_to_idx:
-        raise ValueError("train and val class mappings differ. Ensure identical subfolders.")
-
-    train_loader = DataLoader(
-        train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True
+    # Data generators
+    train_datagen = ImageDataGenerator(
+        rescale=1./255,
+        rotation_range=20,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
+        horizontal_flip=True
     )
-    val_loader = DataLoader(
-        val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True
+    val_datagen = ImageDataGenerator(rescale=1./255)
+
+    train_gen = train_datagen.flow_from_directory(
+        train_dir, target_size=(args.img_size, args.img_size), batch_size=args.batch_size, class_mode='categorical'
     )
-    return train_loader, val_loader, class_to_idx
+    val_gen = val_datagen.flow_from_directory(
+        val_dir, target_size=(args.img_size, args.img_size), batch_size=args.batch_size, class_mode='categorical'
+    )
+
+    # Model
+    base_model = ResNet50(weights='imagenet', include_top=False, input_shape=(args.img_size, args.img_size, 3))
+    x = GlobalAveragePooling2D()(base_model.output)
+    x = Dense(128, activation='relu')(x)
+    output = Dense(train_gen.num_classes, activation='softmax')(x)
+    model = Model(inputs=base_model.input, outputs=output)
+
+    # Optionally freeze base model
+    for layer in base_model.layers:
+        layer.trainable = False
+
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+    model.fit(
+        train_gen,
+        validation_data=val_gen,
+        epochs=args.epochs
+    )
+
+    os.makedirs(os.path.dirname(args.output_model), exist_ok=True)
+    model.save(args.output_model)
+
+    print(f"Model saved to {args.output_model}")
+
 
 
 def build_model(num_classes: int, arch: str = "resnet18", pretrained: bool = False, freeze_backbone: bool = False) -> nn.Module:
@@ -276,23 +271,7 @@ def parse_args():
 
 
 if __name__ == "__main__":
-    args = parse_args()
-    train(
-        data_dir=args.data_dir,
-        output_dir=args.output_dir,
-        arch=args.arch,
-        img_size=args.img_size,
-        epochs=args.epochs,
-        batch_size=args.batch_size,
-        lr=args.lr,
-        weight_decay=args.weight_decay,
-        num_workers=args.num_workers,
-        pretrained=args.pretrained,
-        freeze_backbone=args.freeze_backbone,
-        amp=args.amp,
-        seed=args.seed,
-        label_smoothing=args.label_smoothing,
-    )
+    main()
 
 # Paths
 data_dir = "data"

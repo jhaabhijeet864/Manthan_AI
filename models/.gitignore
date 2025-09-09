@@ -3,3 +3,6 @@ __pycache__/
 data/raw_data/
 data/processed_data/
 data/trained_models/
+models/data/
+models/data/raw_data/
+models/data/raw_data/images/

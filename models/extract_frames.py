@@ -22,10 +22,12 @@ Usage examples:
 """
 
 
+
 try:
+    import cv2
 except ImportError:
-        print("OpenCV (cv2) not found. Install with: pip install opencv-python", file=sys.stderr)
-        sys.exit(1)
+    print("OpenCV (cv2) not found. Install with: pip install opencv-python", file=sys.stderr)
+    sys.exit(1)
 
 
 def find_videos(input_path: Path) -> List[Path]:
